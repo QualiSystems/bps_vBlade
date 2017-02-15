@@ -1,0 +1,7 @@
+shell:
+    name: ixia-breakingpoint-ve-vblade
+    author: Anonymous
+    email: info@quali.com
+    description: Configure deployed vblade
+    version: 0.1.0
+    driver_name: IxiaBreakingpointVeVbladeDriver

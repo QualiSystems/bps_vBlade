@@ -1,0 +1,7 @@
+<Driver Description="Describe the purpose of your CloudShell shell" MainClass="driver.IxiaBreakingpointVeVbladeDriver" Name="IxiaBreakingpointVeVbladeDriver" Version="1.0.0">
+    <Layout>
+        <Category Name="Hidden Commands">
+            <Command Name="pre_autoload_configuration_command"  Tags="" Description="configure vnics"/>
+        </Category>
+    </Layout>
+</Driver>
