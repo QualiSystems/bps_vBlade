@@ -2,6 +2,7 @@
     <Layout>
         <Category Name="Hidden Commands">
             <Command Name="pre_autoload_configuration_command"  Tags="" Description="configure vnics"/>
+            <Command Description="" Name="connect_child_resources" DisplayName="Connect Child Resources" Tags="" />
         </Category>
     </Layout>
 </Driver>
