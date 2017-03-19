@@ -132,33 +132,6 @@ class IxiaBreakingpointVeVbladeDriver(ResourceDriverInterface):
             resources.append(AutoLoadResource(model=MODEL_PORT, name=port_name, relative_address=address))
         return AutoLoadDetails(resources, attributes)
 
-        # '''
-        #    # Add sub resources details
-        #    sub_resources = [ AutoLoadResource(model ='Generic Chassis',name= 'Chassis 1', relative_address='1'),
-        #    AutoLoadResource(model='Generic Module',name= 'Module 1',relative_address= '1/1'),
-        #    AutoLoadResource(model='Generic Port',name= 'Port 1', relative_address='1/1/1'),
-        #    AutoLoadResource(model='Generic Port', name='Port 2', relative_address='1/1/2'),
-        #    AutoLoadResource(model='Generic Power Port', name='Power Port', relative_address='1/PP1')]
-        #
-        #
-        #    attributes = [ AutoLoadAttribute(relative_address='', attribute_name='Location', attribute_value='Santa Clara Lab'),
-        #                   AutoLoadAttribute('', 'Model', 'Catalyst 3850'),
-        #                   AutoLoadAttribute('', 'Vendor', 'Cisco'),
-        #                   AutoLoadAttribute('1', 'Serial Number', 'JAE053002JD'),
-        #                   AutoLoadAttribute('1', 'Model', 'WS-X4232-GB-RJ'),
-        #                   AutoLoadAttribute('1/1', 'Model', 'WS-X4233-GB-EJ'),
-        #                   AutoLoadAttribute('1/1', 'Serial Number', 'RVE056702UD'),
-        #                   AutoLoadAttribute('1/1/1', 'MAC Address', 'fe80::e10c:f055:f7f1:bb7t16'),
-        #                   AutoLoadAttribute('1/1/1', 'IPv4 Address', '192.168.10.7'),
-        #                   AutoLoadAttribute('1/1/2', 'MAC Address', 'te67::e40c:g755:f55y:gh7w36'),
-        #                   AutoLoadAttribute('1/1/2', 'IPv4 Address', '192.168.10.9'),
-        #                   AutoLoadAttribute('1/PP1', 'Model', 'WS-X4232-GB-RJ'),
-        #                   AutoLoadAttribute('1/PP1', 'Port Description', 'Power'),
-        #                   AutoLoadAttribute('1/PP1', 'Serial Number', 'RVE056702UD')]
-        #
-        #    return AutoLoadDetails(sub_resources,attributes)
-        # '''
-
     def connect_child_resources(self, context):
         """
         :type context: cloudshell.shell.core.driver_context.ResourceCommandContext
