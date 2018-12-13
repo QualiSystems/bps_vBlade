@@ -113,7 +113,7 @@
             <AttachedAttributes/>
             <AttributeValues/>
             <Models>
-                <ResourceModel Name="Virtual Port" Description="" SupportsConcurrentCommands="false">
+                <ResourceModel Name="Breaking Point Virtual Port" Description="" SupportsConcurrentCommands="false">
                     <AttachedAttributes>
                         <AttachedAttribute Name="Logical Name" IsOverridable="true" IsLocal="true">
                             <AllowedValues/>

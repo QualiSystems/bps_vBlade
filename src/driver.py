@@ -5,6 +5,9 @@ import copy
 import json
 
 from cloudshell.api.cloudshell_api import CloudShellAPISession, InputNameValue, SetConnectorRequest
+from cloudshell.core.context.error_handling_context import ErrorHandlingContext
+from cloudshell.devices.driver_helper import get_api, get_logger_with_thread_id
+from cloudshell.traffic.virtual.runners.connect_child_resources import ConnectChildResourcesRunner
 from cloudshell.shell.core.driver_context import InitCommandContext, AutoLoadCommandContext, \
     AutoLoadDetails, AutoLoadResource, AutoLoadAttribute
 from cloudshell.shell.core.resource_driver_interface import ResourceDriverInterface
@@ -18,7 +21,7 @@ ATTR_LOGICAL_NAME = "Logical Name"
 ATTR_REQUESTED_SOURCE_VNIC = "Requested Source vNIC Name"
 ATTR_REQUESTED_TARGET_VNIC = "Requested Target vNIC Name"
 IXIA_MANAGEMENT_PORT = "Ixia Management Port"
-MODEL_PORT = "Virtual Port"
+MODEL_PORT = "Breaking Point Virtual Port"
 
 
 class IxiaBreakingpointVeVbladeDriver(ResourceDriverInterface):
@@ -118,7 +121,8 @@ class IxiaBreakingpointVeVbladeDriver(ResourceDriverInterface):
         attributes = []
         for i in range(number_of_ports):
             address = str(i)
-            attributes.append(AutoLoadAttribute(address, "Requested vNIC Name", "Network adapter " + str(i + 1)))
+            attributes.append(AutoLoadAttribute(address, "Requested vNIC Name", str(i + 1)))
+            # attributes.append(AutoLoadAttribute(address, "Requested vNIC Name", "Network adapter " + str(i + 1)))
             if i == 0:
                 port_name = IXIA_MANAGEMENT_PORT
             else:
@@ -133,72 +137,31 @@ class IxiaBreakingpointVeVbladeDriver(ResourceDriverInterface):
         :type context: cloudshell.shell.core.driver_context.ResourceCommandContext
         :rtype: str
         """
+        logger = get_logger_with_thread_id(context)
+        logger.info("Connect child resources command started")
 
-        api = CloudShellAPISession(host=context.connectivity.server_address,
-                                   token_id=context.connectivity.admin_auth_token,
-                                   domain="Global")
-        resource_name = context.resource.fullname
-        reservation_id = context.reservation.reservation_id
-        connectors = context.connectors
+        with ErrorHandlingContext(logger):
+            ip_address = context.resource.address
+            if not ip_address or ip_address.upper() == "NA":
+                logger.info("No IP Address ob BP Blade")
+                # return
 
-        if not context.connectors:
-            return "Success"
+            resource_name = context.resource.fullname
+            reservation_id = context.reservation.reservation_id
+            connectors = context.connectors
+            api = get_api(context)
 
-        resource = api.GetResourceDetails(resource_name)
+            connect_operation = ConnectChildResourcesRunner(logger=logger,
+                                                            cs_api=api)
 
-        to_disconnect = []
-        to_connect = []
-        temp_connectors = []
-        ports = self._get_ports(resource)
+            ports = connect_operation.get_ports(resource_name=resource_name,
+                                                port_model=MODEL_PORT)
 
-        for connector in connectors:
-            me, other = self._set_remap_connector_details(connector, resource_name, temp_connectors)
-            to_disconnect.extend([me, other])
-
-        connectors = temp_connectors
-
-        # these are connectors from app to vlan where user marked to which interface the connector should be connected
-        connectors_with_predefined_target = [connector for connector in connectors if connector.vnic_id != ""]
-
-        # these are connectors from app to vlan where user left the target interface unspecified
-        connectors_without_target = [connector for connector in connectors if connector.vnic_id == ""]
-
-        for connector in connectors_with_predefined_target:
-            if connector.vnic_id not in ports.keys():
-                raise Exception("Tried to connect an interface that is not on reservation - " + connector.vnic_id)
-
-            else:
-                if hasattr(ports[connector.vnic_id], "allocated"):
-                    raise Exception(
-                        "Tried to connect several connections to same interface: " + ports[connector.vnic_id])
-
-                else:
-                    to_connect.append(SetConnectorRequest(SourceResourceFullName=ports[connector.vnic_id].Name,
-                                                          TargetResourceFullName=connector.other,
-                                                          Direction=connector.direction,
-                                                          Alias=connector.alias))
-                    ports[connector.vnic_id].allocated = True
-
-        unallocated_ports = [port for key, port in ports.items() if not hasattr(port, "allocated")]
-
-        if len(unallocated_ports) < len(connectors_without_target):
-            raise Exception("There were more connections to TeraVM than available interfaces after deployment.")
-        else:
-            for port in unallocated_ports:
-                if connectors_without_target:
-                    connector = connectors_without_target.pop()
-                    to_connect.append(SetConnectorRequest(SourceResourceFullName=port.Name,
-                                                          TargetResourceFullName=connector.other,
-                                                          Direction=connector.direction,
-                                                          Alias=connector.alias))
-
-        if connectors_without_target:
-            raise Exception("There were more connections to TeraVM than available interfaces after deployment.")
-
-        api.RemoveConnectorsFromReservation(reservation_id, to_disconnect)
-        api.SetConnectorsInReservation(reservation_id, to_connect)
-
-        return "Success"
+            logger.info("Ports for connection: {}".format(ports))
+            return connect_operation.connect_child_resources(connectors=connectors,
+                                                             ports=ports,
+                                                             resource_name=resource_name,
+                                                             reservation_id=reservation_id)
 
     @staticmethod
     def _set_remap_connector_details(connector, resource_name, connectors):
